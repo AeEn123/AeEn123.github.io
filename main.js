@@ -18,13 +18,7 @@ async function fetchAllFilesFromRepo(url) {
     return files;
 }
 
-async function setBackground() {
-    const response = await fetch('https://api.github.com/users/AeEn123/repos');
-    const repos = await response.json();
-    if (!Array.isArray(repos)) {
-        console.error('Unexpected response format:', repos);
-        return;
-    }
+async function setBackground(repos) {
     const filteredRepos = repos.filter((repo) =>
         repo.name != "A-test-repository" || repo.name != "channel-logo"
     )
@@ -36,7 +30,7 @@ async function setBackground() {
 
     if (files.length === 0) {
         console.error('No valid files found in the repository.');
-        return '';
+        return;
     }
 
     const randomFile = files[Math.floor(Math.random() * files.length)];
@@ -45,6 +39,46 @@ async function setBackground() {
     const fileContent = await fileResponse.text();
     
     document.getElementById("background").textContent = fileContent
+}
+
+async function setRepos(repos) {
+    const div = document.getElementById("repos")
+    let html = ""
+    repos.forEach((repo) => {
+        console.log(repo)
+        html += `
+        <section>
+            <a href="${repo.html_url}"><h1>${repo.name}</h1></a>`
+
+        if (repo.fork) {
+            html += "<i>forked from another repo</i>"
+        }
+
+        if (repo.homepage) {
+            html += `<a href="${repo.homepage}">${repo.homepage}</a>`
+        }
+
+        html += `
+            <p>${repo.description}</p>
+        </section>`
+
+
+    })
+    div.innerHTML += html
+}
+
+async function githubContent() {
+    const response = await fetch('https://api.github.com/users/AeEn123/repos');
+    const temp = await response.json();
+    if (!Array.isArray(temp)) {
+        console.error('Unexpected response format:', repos);
+        return;
+    }
+
+    const repos = temp.sort((a, b) => b.stargazers_count - a.stargazers_count)
+    setRepos(repos)
+    setBackground(repos)   
+
 }
 
 function update(event) {
@@ -59,5 +93,5 @@ setInterval(function() {
     document.getElementById("time").innerHTML = "My time zone is GMT (UK Time) - " + ukTime.toLocaleString();
 }, 1000)
 
-setBackground()
+githubContent()
 document.addEventListener('scroll', event => update(event));
